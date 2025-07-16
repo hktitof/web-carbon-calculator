@@ -12,6 +12,14 @@ const MAX_AGE_MS = 10 * (60 * (1000)); // 10 minutes
 const CAR_EMISSIONS_GPM = 0.143
 
 function calculatePageEmissions() {
+    let runButton = document.querySelector("#runButton");
+    runButton.remove()
+
+    let main = document.querySelector("main");
+    let spinner = document.createElement("div");
+    spinner.classList.add("spinner");
+    main.appendChild(spinner);
+
     if (!window.performance || !performance.getEntriesByType) {
     // todo: handle error properly
         console.log("⚠️ Your browser does not support the CO₂ calculator.");
@@ -101,43 +109,8 @@ function updateToast(totalKB, estimatedCO2, drivingDistance) {
 
 // Run after page load (and a delay for complete resource capture)
 window.addEventListener("load", () => {
-    localStorage.removeItem(localStorageKey);
-
-    const closeBtn = document.getElementById("co2ToastClose");
-    if (closeBtn) {
-        closeBtn.addEventListener("click", () => {
-            const data = {
-                timestamp: Date.now()
-            };
-            localStorage.setItem(localStorageKey, JSON.stringify(data));
-        });
-    }
-
-    if (shouldRunEmissionsScript()) {
-        setTimeout(calculatePageEmissions, 5000);
+    const runButton = document.querySelector("#run");
+    if (runButton) {
+        runButton.onclick = calculatePageEmissions;
     }
 });
-
-function shouldRunEmissionsScript() {
-    const saved = localStorage.getItem(localStorageKey);
-    if (!saved) return true; // No record → go ahead and run
-
-    try {
-        const parsed = JSON.parse(saved);
-        const lastClosedTime = parsed.timestamp;
-
-        // If less than MAX_AGE_MS has passed, don't run
-        if (Date.now() - lastClosedTime < MAX_AGE_MS) {
-            return false;
-        }
-
-        // Otherwise, clear and allow running again
-        localStorage.removeItem(localStorageKey);
-        return true;
-
-    } catch (e) {
-        // In case of corrupted data, reset and run
-        localStorage.removeItem(localStorageKey);
-        return true;
-    }
-}

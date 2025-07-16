@@ -6,34 +6,22 @@ var co2=(()=>{
 // using the Sustainable Web Design Model for calculations
 const emissions = new co2.co2({ model: "swd"});
 
-const localStorageKey = 'ecoDismissedData';
-// todo: 10 minute for testing, to change this
-const MAX_AGE_MS = 10 * (60 * (1000)); // 10 minutes
 const CAR_EMISSIONS_GPM = 0.143
 
-function calculatePageEmissions() {
+function calculatePageEmissions(resources) {
     let runButton = document.querySelector("#runButton");
     runButton.remove()
 
-    let main = document.querySelector("main");
-    let spinner = document.createElement("div");
-    spinner.classList.add("spinner");
-    main.appendChild(spinner);
-
     if (!window.performance || !performance.getEntriesByType) {
-    // todo: handle error properly
         console.log("⚠️ Your browser does not support the CO₂ calculator.");
         return;
     }
 
     if (!emissions) {
-    // todo: handle error properly
         console.log("⚠️ Oops! Something went wrong with the CO₂ calculator.");
         return;
     }
 
-    // get resources loaded
-    const resources = performance.getEntriesByType("resource");
     let totalBytes = 0;
 
     // get transfer size
@@ -42,6 +30,7 @@ function calculatePageEmissions() {
         totalBytes += navigationEntries[0].transferSize;
     }
 
+    // sums all the sizes of all the transferred data
     resources.forEach(resource => {
         if (resource.transferSize) {
             totalBytes += resource.transferSize;
@@ -50,6 +39,7 @@ function calculatePageEmissions() {
 
     const totalKB = (totalBytes / 1024).toFixed(2);
     const greenHost = false;
+    // the actual calculation outsourced to co2.js
     const estimatedCO2 = emissions.perByte(totalBytes, greenHost).toFixed(3);
     const drivingDistance = (estimatedCO2 / CAR_EMISSIONS_GPM).toFixed(2);
 
@@ -60,10 +50,13 @@ function calculatePageEmissions() {
 }
 
 function updateToast(totalKB, estimatedCO2, drivingDistance) {
-    const toastBody = document.querySelector(".toast-body");
+    // creates the presentation form
+
+    const toastBody = document.querySelector("#toastBody");
+    console.log(toastBody)
     if (toastBody) {
         let container = document.createElement("div");
-        container.classList.add("toast-body-response");
+        container.id = "toast-body-response";
         
             let pageSizeLine = document.createElement("p");
 
@@ -100,17 +93,32 @@ function updateToast(totalKB, estimatedCO2, drivingDistance) {
         
         container.append(pageSizeLine, emissionsLine, carComparisonLine);
         toastBody.append(container)
+        console.log(toastBody)
 
         // display toast
-        const toast = document.querySelector(".co2-toast");
+        const toast = document.querySelector("#co2Toast");
         toast.hidden = false;
     }
 }
 
-// Run after page load (and a delay for complete resource capture)
-window.addEventListener("load", () => {
-    const runButton = document.querySelector("#run");
-    if (runButton) {
-        runButton.onclick = calculatePageEmissions;
-    }
-});
+const runButton = document.querySelector("#runButton");
+if (runButton) {
+    runButton.addEventListener("click", async () => {
+        console.log("click gotten")
+
+        // getting the resources from the content script because the popup doesn't have access
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        try {
+            const response = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PERFORMANCE_DATA' });
+            if (response && response.payload) {
+                console.log("Data received!", response.payload);
+
+                calculatePageEmissions(response.payload);
+            }
+        } catch (e) {
+            console.error("Error:", e);
+        }
+    });
+    console.log("listener added");
+}

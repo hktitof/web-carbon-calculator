@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Web Carbon Calculator</title>
+
+        <link rel="stylesheet" href="popup.css">
+    </head>
+    <main>
+        <button id="runButton">
+            Calculate CO<sub>2</sub>
+        </button>
+
+        <div id="co2Toast" role="alert" aria-live="assertive" aria-atomic="true" hidden>
+            <div id="toast-header">
+                <strong>🌍 CO<sub>2</sub> Tracker</strong>
+            </div>
+            <div id="toastBody"></div>
+        </div>
+
+        <img src="EI_Baseline_2lines_1@8x.png" alt="The Energy Institute logo" width="150">
+
+        <script type="module" src="../scripts/popup.js"></script>
+    </main>
+</html>

@@ -1,12 +1,27 @@
 {
-    "name": "Web Carbon Calculator",
-    "description": "Displays the carbon emissions of the website you're visiting.",
-    "version": "0.1.0",
-    "manifest_version": 3,
-    "host_permissions": [
-        "<all_urls>"
-    ],
-    "action": {
-        "default_popup": "popup.html"
+  "name": "Web Carbon Calculator",
+  "description": "Track and reduce your web browsing carbon footprint with real-time CO₂ emissions data.",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Web Carbon Calculator"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["co2.js", "content.js"],
+      "run_at": "document_end"
     }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
 }
